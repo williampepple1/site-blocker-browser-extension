@@ -17,6 +17,44 @@ chrome.runtime.onInstalled.addListener(() => {
       });
     }
   });
+  
+  // Create context menu
+  chrome.contextMenus.create({
+    id: 'blockSite',
+    title: 'Block this site',
+    contexts: ['page']
+  });
+});
+
+// Listen for settings updates and context menu clicks
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'settingsUpdated') {
+    console.log('Settings updated, reloading blocked sites');
+  }
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'blockSite') {
+    const url = new URL(tab.url);
+    const hostname = url.hostname.toLowerCase();
+    
+    // Remove www. prefix if present
+    const domain = hostname.replace(/^www\./, '');
+    
+    chrome.storage.sync.get(['blockedSites'], (result) => {
+      const blockedSites = result.blockedSites || [];
+      
+      if (blockedSites.includes(domain)) {
+        alert(`${domain} is already blocked!`);
+      } else {
+        blockedSites.push(domain);
+        chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
+          alert(`${domain} has been added to blocked sites!`);
+        });
+      }
+    });
+  }
 });
 
 // Block web requests to configured sites

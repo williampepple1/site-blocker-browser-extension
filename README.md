@@ -21,16 +21,19 @@ A browser extension designed for parental controls to block access to specific w
 
 ✅ **Step 1 Complete**: Basic extension structure
 ✅ **Step 2 Complete**: Website blocking functionality
+✅ **Step 3 Complete**: Settings interface for managing blocked sites
 
-The extension now actively blocks access to configured websites and shows a blocked page when users try to access them.
+The extension now has a complete settings interface where parents can easily manage which websites are blocked.
 
 ## Files Created
 
 - `manifest.json` - Extension configuration
-- `background.js` - Background service worker with blocking logic
+- `background.js` - Background service worker with blocking logic and context menu
 - `popup.html` - Extension popup interface
-- `popup.js` - Popup functionality with toggle controls
+- `popup.js` - Popup functionality with toggle controls and settings link
 - `blocked.html` - Page shown when accessing blocked sites
+- `settings.html` - Settings page for managing blocked sites
+- `settings.js` - Settings page functionality
 - `icons/` - Extension icons (to be added)
 
 ## Features Implemented
@@ -40,10 +43,13 @@ The extension now actively blocks access to configured websites and shows a bloc
 - ✅ Enable/disable extension toggle
 - ✅ Display list of currently blocked sites
 - ✅ Default blocked sites (facebook.com, twitter.com, instagram.com)
+- ✅ Settings page for adding/removing blocked sites
+- ✅ Domain validation and duplicate prevention
+- ✅ Context menu option to block current site
+- ✅ Real-time settings updates
 
 ## Next Steps
 
-- Create settings interface for managing blocked sites
 - Add password protection for settings
 - Implement time restrictions
 - Add activity logging
