@@ -1,0 +1,16 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#007bff" stroke="#0056b3" stroke-width="2"/>
+  
+  <!-- Shield shape -->
+  <path d="M64 25 L82 35 L82 48 C82 65 73 78 64 85 C55 78 46 65 46 48 L46 35 Z" 
+        fill="#ffffff" stroke="#0056b3" stroke-width="2"/>
+  
+  <!-- Lock symbol -->
+  <rect x="58" y="52" width="12" height="10" rx="2" fill="#dc3545" stroke="#721c24" stroke-width="1"/>
+  <circle cx="64" cy="50" r="3" fill="#dc3545" stroke="#721c24" stroke-width="1"/>
+  
+  <!-- Blocked X -->
+  <line x1="52" y1="52" x2="76" y2="76" stroke="#dc3545" stroke-width="4" stroke-linecap="round"/>
+  <line x1="76" y1="52" x2="52" y2="76" stroke="#dc3545" stroke-width="4" stroke-linecap="round"/>
+</svg> 
