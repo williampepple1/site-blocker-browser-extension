@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Add event listener for toggle button
   document.getElementById('toggleButton').addEventListener('click', toggleExtension);
+  
+  // Add event listener for settings link
+  document.getElementById('settingsLink').addEventListener('click', openSettings);
 });
 
 function loadExtensionStatus() {
@@ -59,4 +62,8 @@ function toggleExtension() {
       console.log(`Extension ${newStatus ? 'enabled' : 'disabled'}`);
     });
   });
+}
+
+function openSettings() {
+  chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
 } 

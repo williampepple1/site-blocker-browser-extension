@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Site Blocker Settings</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+    }
+    .section h2 {
+      color: #495057;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    .add-site {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .add-site input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .add-site button {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .add-site button:hover {
+      background-color: #218838;
+    }
+    .site-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .site-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 5px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+    }
+    .site-item:hover {
+      background-color: #f8f9fa;
+    }
+    .site-name {
+      font-weight: 500;
+      color: #495057;
+    }
+    .remove-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .remove-btn:hover {
+      background-color: #c82333;
+    }
+    .save-btn {
+      background-color: #007bff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    .save-btn:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      display: none;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Site Blocker Settings</h1>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="section">
+      <h2>Manage Blocked Sites</h2>
+      <p>Add or remove websites that should be blocked. Enter domain names without "http://" or "www." (e.g., "facebook.com")</p>
+      
+      <div class="add-site">
+        <input type="text" id="newSite" placeholder="Enter domain (e.g., facebook.com)" />
+        <button onclick="addSite()">Add Site</button>
+      </div>
+      
+      <div class="site-list" id="siteList">
+        <!-- Blocked sites will be loaded here -->
+      </div>
+    </div>
+    
+    <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+  </div>
+  
+  <script src="settings.js"></script>
+</body>
+</html> 
