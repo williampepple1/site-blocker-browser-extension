@@ -36,23 +36,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'blockSite') {
-    const url = new URL(tab.url);
-    const hostname = url.hostname.toLowerCase();
-    
-    // Remove www. prefix if present
-    const domain = hostname.replace(/^www\./, '');
-    
-    chrome.storage.sync.get(['blockedSites'], (result) => {
-      const blockedSites = result.blockedSites || [];
-      
-      if (blockedSites.includes(domain)) {
-        alert(`${domain} is already blocked!`);
-      } else {
-        blockedSites.push(domain);
-        chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
-          alert(`${domain} has been added to blocked sites!`);
-        });
+    // Check if password is set
+    chrome.storage.sync.get(['passwordSet'], (result) => {
+      if (!result.passwordSet) {
+        alert('Please set up a password first to use this feature!');
+        return;
       }
+      
+      const url = new URL(tab.url);
+      const hostname = url.hostname.toLowerCase();
+      
+      // Remove www. prefix if present
+      const domain = hostname.replace(/^www\./, '');
+      
+      chrome.storage.sync.get(['blockedSites'], (result) => {
+        const blockedSites = result.blockedSites || [];
+        
+        if (blockedSites.includes(domain)) {
+          alert(`${domain} is already blocked!`);
+        } else {
+          blockedSites.push(domain);
+          chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
+            alert(`${domain} has been added to blocked sites!`);
+          });
+        }
+      });
     });
   }
 });
@@ -62,12 +70,20 @@ chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
     // Check if extension is enabled
     return new Promise((resolve) => {
-      chrome.storage.sync.get(['enabled', 'blockedSites'], (result) => {
+      chrome.storage.sync.get(['enabled', 'blockedSites', 'timeRestrictions'], (result) => {
         const isEnabled = result.enabled !== false; // Default to true
         const blockedSites = result.blockedSites || [];
+        const timeRestrictions = result.timeRestrictions || {};
         
         if (!isEnabled) {
           resolve({ cancel: false });
+          return;
+        }
+        
+        // Check time restrictions
+        if (timeRestrictions.enabled && !isWithinAllowedTime(timeRestrictions)) {
+          console.log('Access blocked due to time restrictions');
+          resolve({ redirectUrl: chrome.runtime.getURL('blocked.html?reason=Time restriction active') });
           return;
         }
         
@@ -83,7 +99,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         if (isBlocked) {
           console.log(`Blocked access to: ${hostname}`);
           // Redirect to blocked page instead of just canceling
-          resolve({ redirectUrl: chrome.runtime.getURL('blocked.html') });
+          resolve({ redirectUrl: chrome.runtime.getURL('blocked.html?reason=Website is in blocked list') });
         } else {
           resolve({ cancel: false });
         }
@@ -92,4 +108,37 @@ chrome.webRequest.onBeforeRequest.addListener(
   },
   { urls: ["<all_urls>"] },
   ["blocking"]
-); 
+);
+
+// Function to check if current time is within allowed hours
+function isWithinAllowedTime(timeRestrictions) {
+  if (!timeRestrictions.enabled) return true;
+  
+  const now = new Date();
+  const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes(); // Convert to minutes
+  
+  // Check if current day is allowed
+  if (!timeRestrictions.days || !timeRestrictions.days.includes(currentDay)) {
+    return false;
+  }
+  
+  // Parse start and end times
+  const startTime = timeRestrictions.startTime || '22:00';
+  const endTime = timeRestrictions.endTime || '07:00';
+  
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  
+  // Handle overnight restrictions (e.g., 22:00 to 07:00)
+  if (startMinutes > endMinutes) {
+    // Overnight restriction
+    return currentTime >= startMinutes || currentTime <= endMinutes;
+  } else {
+    // Same day restriction
+    return currentTime >= startMinutes && currentTime <= endMinutes;
+  }
+} 

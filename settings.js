@@ -3,7 +3,9 @@ let blockedSites = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Settings page loaded');
-  loadBlockedSites();
+  
+  // Check authentication first
+  checkAuthentication();
   
   // Add enter key support for input field
   document.getElementById('newSite').addEventListener('keypress', (e) => {
@@ -11,12 +13,36 @@ document.addEventListener('DOMContentLoaded', () => {
       addSite();
     }
   });
+  
+  // Add logout handler
+  document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+  
+  // Add time restrictions handlers
+  document.getElementById('timeRestrictionsEnabled').addEventListener('change', toggleTimeRestrictionsPanel);
+  document.getElementById('dailyLimitEnabled').addEventListener('change', toggleDailyLimitInput);
 });
 
+function checkAuthentication() {
+  chrome.storage.local.get(['authenticated', 'authTimestamp'], (result) => {
+    const now = Date.now();
+    const sessionTimeout = 30 * 60 * 1000; // 30 minutes
+    
+    // Check if authenticated and session is still valid
+    if (result.authenticated && result.authTimestamp && (now - result.authTimestamp) < sessionTimeout) {
+      // Session is valid, load settings
+      loadBlockedSites();
+    } else {
+      // Not authenticated or session expired, redirect to login
+      window.location.href = 'login.html';
+    }
+  });
+}
+
 function loadBlockedSites() {
-  chrome.storage.sync.get(['blockedSites'], (result) => {
+  chrome.storage.sync.get(['blockedSites', 'timeRestrictions'], (result) => {
     blockedSites = result.blockedSites || [];
     displaySites();
+    loadTimeRestrictions(result.timeRestrictions);
   });
 }
 
@@ -72,11 +98,95 @@ function removeSite(index) {
 }
 
 function saveSettings() {
-  chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
+  const timeRestrictions = getTimeRestrictions();
+  
+  chrome.storage.sync.set({ 
+    blockedSites: blockedSites,
+    timeRestrictions: timeRestrictions
+  }, () => {
     showMessage('Settings saved successfully!', 'success');
     
     // Notify background script about the change
     chrome.runtime.sendMessage({ action: 'settingsUpdated' });
+  });
+}
+
+function loadTimeRestrictions(timeRestrictions) {
+  if (!timeRestrictions) {
+    // Set default values
+    document.getElementById('timeRestrictionsEnabled').checked = false;
+    document.getElementById('startTime').value = '22:00';
+    document.getElementById('endTime').value = '07:00';
+    document.getElementById('dailyLimitEnabled').checked = false;
+    document.getElementById('dailyLimitHours').value = '2';
+    return;
+  }
+  
+  document.getElementById('timeRestrictionsEnabled').checked = timeRestrictions.enabled || false;
+  document.getElementById('startTime').value = timeRestrictions.startTime || '22:00';
+  document.getElementById('endTime').value = timeRestrictions.endTime || '07:00';
+  document.getElementById('dailyLimitEnabled').checked = timeRestrictions.dailyLimitEnabled || false;
+  document.getElementById('dailyLimitHours').value = timeRestrictions.dailyLimitHours || '2';
+  
+  // Set day checkboxes
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  days.forEach(day => {
+    const checkbox = document.getElementById(`day${day}`);
+    if (checkbox) {
+      checkbox.checked = timeRestrictions.days ? timeRestrictions.days.includes(day) : true;
+    }
+  });
+  
+  toggleTimeRestrictionsPanel();
+  toggleDailyLimitInput();
+}
+
+function getTimeRestrictions() {
+  const enabled = document.getElementById('timeRestrictionsEnabled').checked;
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  const dailyLimitEnabled = document.getElementById('dailyLimitEnabled').checked;
+  const dailyLimitHours = document.getElementById('dailyLimitHours').value;
+  
+  // Get selected days
+  const days = [];
+  const dayCheckboxes = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  dayCheckboxes.forEach(day => {
+    const checkbox = document.getElementById(`day${day}`);
+    if (checkbox && checkbox.checked) {
+      days.push(day);
+    }
+  });
+  
+  return {
+    enabled: enabled,
+    startTime: startTime,
+    endTime: endTime,
+    days: days,
+    dailyLimitEnabled: dailyLimitEnabled,
+    dailyLimitHours: parseInt(dailyLimitHours) || 2
+  };
+}
+
+function toggleTimeRestrictionsPanel() {
+  const enabled = document.getElementById('timeRestrictionsEnabled').checked;
+  const panel = document.getElementById('timeRestrictionsPanel');
+  panel.style.display = enabled ? 'block' : 'none';
+}
+
+function toggleDailyLimitInput() {
+  const enabled = document.getElementById('dailyLimitEnabled').checked;
+  const input = document.getElementById('dailyLimitHours');
+  input.disabled = !enabled;
+  input.style.opacity = enabled ? '1' : '0.5';
+}
+
+function handleLogout() {
+  chrome.storage.local.remove(['authenticated', 'authTimestamp'], () => {
+    showMessage('Logged out successfully!', 'info');
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 1000);
   });
 }
 

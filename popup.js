@@ -21,8 +21,9 @@ function loadExtensionStatus() {
 }
 
 function loadBlockedSites() {
-  chrome.storage.sync.get(['blockedSites'], (result) => {
+  chrome.storage.sync.get(['blockedSites', 'timeRestrictions'], (result) => {
     const blockedSites = result.blockedSites || [];
+    const timeRestrictions = result.timeRestrictions || {};
     const siteListElement = document.getElementById('siteList');
     
     if (blockedSites.length === 0) {
@@ -32,6 +33,8 @@ function loadBlockedSites() {
         `<div class="site-item">• ${site}</div>`
       ).join('');
     }
+    
+    loadTimeStatus(timeRestrictions);
   });
 }
 
@@ -64,6 +67,57 @@ function toggleExtension() {
   });
 }
 
+function loadTimeStatus(timeRestrictions) {
+  const timeStatusElement = document.getElementById('timeStatus');
+  
+  if (!timeRestrictions.enabled) {
+    timeStatusElement.innerHTML = '<div class="site-item">Time restrictions disabled</div>';
+    return;
+  }
+  
+  const now = new Date();
+  const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const startTime = timeRestrictions.startTime || '22:00';
+  const endTime = timeRestrictions.endTime || '07:00';
+  const days = timeRestrictions.days || [];
+  
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  
+  let isActive = false;
+  if (days.includes(currentDay)) {
+    if (startMinutes > endMinutes) {
+      // Overnight restriction
+      isActive = currentTime >= startMinutes || currentTime <= endMinutes;
+    } else {
+      // Same day restriction
+      isActive = currentTime >= startMinutes && currentTime <= endMinutes;
+    }
+  }
+  
+  const status = isActive ? 'Active' : 'Inactive';
+  const statusColor = isActive ? '#dc3545' : '#28a745';
+  
+  timeStatusElement.innerHTML = `
+    <div class="site-item" style="color: ${statusColor}; font-weight: bold;">• ${status}</div>
+    <div class="site-item">• ${startTime} - ${endTime}</div>
+    <div class="site-item">• Days: ${days.join(', ')}</div>
+  `;
+}
+
 function openSettings() {
-  chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
+  // Check if password is set
+  chrome.storage.sync.get(['passwordSet'], (result) => {
+    if (result.passwordSet) {
+      // Password is set, go to login page
+      chrome.tabs.create({ url: chrome.runtime.getURL('login.html') });
+    } else {
+      // No password set, go to password setup
+      chrome.tabs.create({ url: chrome.runtime.getURL('password.html') });
+    }
+  });
 } 
