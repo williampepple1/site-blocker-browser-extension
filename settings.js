@@ -87,6 +87,7 @@ function addSite() {
   blockedSites.push(site);
   displaySites();
   input.value = '';
+  logActivity('settings', `Added ${site} to blocked sites`);
   showMessage(`Added ${site} to blocked sites`, 'success');
 }
 
@@ -94,6 +95,7 @@ function removeSite(index) {
   const removedSite = blockedSites[index];
   blockedSites.splice(index, 1);
   displaySites();
+  logActivity('settings', `Removed ${removedSite} from blocked sites`);
   showMessage(`Removed ${removedSite} from blocked sites`, 'success');
 }
 
@@ -104,6 +106,8 @@ function saveSettings() {
     blockedSites: blockedSites,
     timeRestrictions: timeRestrictions
   }, () => {
+    // Log settings change
+    logActivity('settings', `Settings updated - ${blockedSites.length} blocked sites, time restrictions ${timeRestrictions.enabled ? 'enabled' : 'disabled'}`);
     showMessage('Settings saved successfully!', 'success');
     
     // Notify background script about the change
@@ -187,6 +191,26 @@ function handleLogout() {
     setTimeout(() => {
       window.location.href = 'login.html';
     }, 1000);
+  });
+}
+
+function logActivity(type, details) {
+  const logEntry = {
+    type: type,
+    details: details,
+    timestamp: Date.now()
+  };
+  
+  chrome.storage.local.get(['activityLogs'], (result) => {
+    const logs = result.activityLogs || [];
+    logs.push(logEntry);
+    
+    // Keep only last 1000 logs to prevent storage bloat
+    if (logs.length > 1000) {
+      logs.splice(0, logs.length - 1000);
+    }
+    
+    chrome.storage.local.set({ activityLogs: logs });
   });
 }
 

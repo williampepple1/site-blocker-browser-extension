@@ -83,6 +83,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         // Check time restrictions
         if (timeRestrictions.enabled && !isWithinAllowedTime(timeRestrictions)) {
           console.log('Access blocked due to time restrictions');
+          logActivity('blocked', 'Access blocked due to time restrictions', details.url);
           resolve({ redirectUrl: chrome.runtime.getURL('blocked.html?reason=Time restriction active') });
           return;
         }
@@ -98,6 +99,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         
         if (isBlocked) {
           console.log(`Blocked access to: ${hostname}`);
+          logActivity('blocked', `Blocked access to ${hostname}`, details.url);
           // Redirect to blocked page instead of just canceling
           resolve({ redirectUrl: chrome.runtime.getURL('blocked.html?reason=Website is in blocked list') });
         } else {
@@ -141,4 +143,26 @@ function isWithinAllowedTime(timeRestrictions) {
     // Same day restriction
     return currentTime >= startMinutes && currentTime <= endMinutes;
   }
+}
+
+// Function to log activity
+function logActivity(type, details, url = null) {
+  const logEntry = {
+    type: type,
+    details: details,
+    url: url,
+    timestamp: Date.now()
+  };
+  
+  chrome.storage.local.get(['activityLogs'], (result) => {
+    const logs = result.activityLogs || [];
+    logs.push(logEntry);
+    
+    // Keep only last 1000 logs to prevent storage bloat
+    if (logs.length > 1000) {
+      logs.splice(0, logs.length - 1000);
+    }
+    
+    chrome.storage.local.set({ activityLogs: logs });
+  });
 } 

@@ -37,6 +37,8 @@ function handleLogin(e) {
         authenticated: true,
         authTimestamp: Date.now()
       }, () => {
+        // Log successful login
+        logActivity('login', 'Settings accessed successfully');
         showMessage('Login successful! Redirecting...', 'info');
         setTimeout(() => {
           window.location.href = 'settings.html';
@@ -75,6 +77,26 @@ function simpleHash(str) {
   }
   
   return hash.toString();
+}
+
+function logActivity(type, details) {
+  const logEntry = {
+    type: type,
+    details: details,
+    timestamp: Date.now()
+  };
+  
+  chrome.storage.local.get(['activityLogs'], (result) => {
+    const logs = result.activityLogs || [];
+    logs.push(logEntry);
+    
+    // Keep only last 1000 logs to prevent storage bloat
+    if (logs.length > 1000) {
+      logs.splice(0, logs.length - 1000);
+    }
+    
+    chrome.storage.local.set({ activityLogs: logs });
+  });
 }
 
 function showMessage(text, type) {

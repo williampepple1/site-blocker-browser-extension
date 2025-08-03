@@ -24,8 +24,9 @@ A browser extension designed for parental controls to block access to specific w
 ✅ **Step 3 Complete**: Settings interface for managing blocked sites
 ✅ **Step 4 Complete**: Password protection for settings
 ✅ **Step 5 Complete**: Time restrictions
+✅ **Step 6 Complete**: Activity logging
 
-The extension now includes comprehensive time-based restrictions for advanced parental control.
+The extension now includes comprehensive time-based restrictions and detailed activity logging for advanced parental control.
 
 ## Files Created
 
@@ -41,7 +42,9 @@ The extension now includes comprehensive time-based restrictions for advanced pa
 - `password.js` - Password setup functionality
 - `login.html` - Login page for accessing settings
 - `login.js` - Login authentication functionality
-- `icons/` - Extension icons (to be added)
+- `activity.html` - Activity logging page with statistics and filtering
+- `activity.js` - Activity logging functionality
+- `icons/` - Extension icons (PNG files created from SVG)
 
 ## Features Implemented
 
@@ -65,7 +68,15 @@ The extension now includes comprehensive time-based restrictions for advanced pa
 - ✅ Time status display in popup
 - ✅ Blocking reason display on blocked page
 - ✅ Daily time limit settings (UI ready)
+- ✅ Comprehensive activity logging
+- ✅ Activity statistics dashboard
+- ✅ Filterable activity logs by type and date
+- ✅ Logged events: blocked attempts, settings changes, login events
+- ✅ Automatic log cleanup (keeps last 1000 entries)
 
 ## Next Steps
 
-- Add activity logging
+- Implement daily time limit functionality (UI ready, logic pending)
+- Add export functionality for activity logs
+- Add email notifications for blocked attempts
+- Add whitelist functionality for trusted sites
