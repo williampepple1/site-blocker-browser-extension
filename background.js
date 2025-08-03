@@ -65,52 +65,100 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-// Block web requests to configured sites
-chrome.webRequest.onBeforeRequest.addListener(
-  (details) => {
-    // Check if extension is enabled
-    return new Promise((resolve) => {
-      chrome.storage.sync.get(['enabled', 'blockedSites', 'timeRestrictions'], (result) => {
-        const isEnabled = result.enabled !== false; // Default to true
-        const blockedSites = result.blockedSites || [];
-        const timeRestrictions = result.timeRestrictions || {};
-        
-        if (!isEnabled) {
-          resolve({ cancel: false });
-          return;
+// Function to update blocking rules based on settings
+function updateBlockingRules() {
+  chrome.storage.sync.get(['enabled', 'blockedSites', 'timeRestrictions'], (result) => {
+    const isEnabled = result.enabled !== false; // Default to true
+    const blockedSites = result.blockedSites || [];
+    const timeRestrictions = result.timeRestrictions || {};
+    
+    if (!isEnabled) {
+      // Disable all rules if extension is disabled
+      chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // Remove any existing rules
+      });
+      return;
+    }
+    
+    // Check time restrictions
+    if (timeRestrictions.enabled && !isWithinAllowedTime(timeRestrictions)) {
+      // Add time restriction rule
+      chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // Remove existing rules
+        addRules: [{
+          id: 1,
+          priority: 1,
+          action: {
+            type: "redirect",
+            redirect: {
+              url: chrome.runtime.getURL('blocked.html?reason=Time restriction active')
+            }
+          },
+          condition: {
+            urlFilter: "*",
+            resourceTypes: ["main_frame"]
+          }
+        }]
+      });
+      return;
+    }
+    
+    // Create rules for blocked sites
+    const rules = blockedSites.map((site, index) => ({
+      id: index + 1,
+      priority: 1,
+      action: {
+        type: "redirect",
+        redirect: {
+          url: chrome.runtime.getURL('blocked.html?reason=Website is in blocked list')
         }
-        
-        // Check time restrictions
-        if (timeRestrictions.enabled && !isWithinAllowedTime(timeRestrictions)) {
-          console.log('Access blocked due to time restrictions');
-          logActivity('blocked', 'Access blocked due to time restrictions', details.url);
-          resolve({ redirectUrl: chrome.runtime.getURL('blocked.html?reason=Time restriction active') });
-          return;
-        }
-        
-        const url = new URL(details.url);
-        const hostname = url.hostname.toLowerCase();
-        
-        // Check if the hostname matches any blocked sites
-        const isBlocked = blockedSites.some(site => {
-          const blockedSite = site.toLowerCase();
-          return hostname === blockedSite || hostname.endsWith('.' + blockedSite);
-        });
-        
-        if (isBlocked) {
-          console.log(`Blocked access to: ${hostname}`);
-          logActivity('blocked', `Blocked access to ${hostname}`, details.url);
-          // Redirect to blocked page instead of just canceling
-          resolve({ redirectUrl: chrome.runtime.getURL('blocked.html?reason=Website is in blocked list') });
-        } else {
-          resolve({ cancel: false });
+      },
+      condition: {
+        urlFilter: `||${site}/*`,
+        resourceTypes: ["main_frame"]
+      }
+    }));
+    
+    // Update rules
+    chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // Remove existing rules
+      addRules: rules
+    });
+  });
+}
+
+// Update rules when extension starts
+updateBlockingRules();
+
+// Listen for settings updates
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'settingsUpdated') {
+    console.log('Settings updated, updating blocking rules');
+    updateBlockingRules();
+  }
+});
+
+// Listen for tab updates to log blocked attempts
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    // Check if this is a blocked page
+    if (tab.url.includes('blocked.html')) {
+      const urlParams = new URLSearchParams(tab.url.split('?')[1] || '');
+      const reason = urlParams.get('reason') || 'Website is in blocked list';
+      
+      // Get the original URL from the referrer or session storage
+      chrome.storage.local.get(['lastBlockedUrl'], (result) => {
+        if (result.lastBlockedUrl) {
+          logActivity('blocked', `Blocked access - ${reason}`, result.lastBlockedUrl);
+          chrome.storage.local.remove(['lastBlockedUrl']);
         }
       });
-    });
-  },
-  { urls: ["<all_urls>"] },
-  ["blocking"]
-);
+    } else {
+      // Store the URL in case it gets blocked
+      chrome.storage.local.set({ lastBlockedUrl: tab.url });
+    }
+  }
+});
 
 // Function to check if current time is within allowed hours
 function isWithinAllowedTime(timeRestrictions) {

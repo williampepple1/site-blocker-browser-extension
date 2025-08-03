@@ -30,7 +30,8 @@ The extension now includes comprehensive time-based restrictions and detailed ac
 
 ## Files Created
 
-- `manifest.json` - Extension configuration
+- `manifest.json` - Extension configuration (Manifest V3 with declarativeNetRequest)
+- `rules.json` - DeclarativeNetRequest rules for blocking
 - `background.js` - Background service worker with blocking logic, context menu, and time restrictions
 - `popup.html` - Extension popup interface with time status
 - `popup.js` - Popup functionality with toggle controls, settings link, and time status
@@ -48,7 +49,7 @@ The extension now includes comprehensive time-based restrictions and detailed ac
 
 ## Features Implemented
 
-- ✅ Website blocking using webRequest API
+- ✅ Website blocking using declarativeNetRequest API (Manifest V3 compliant)
 - ✅ Redirect to blocked page instead of just canceling requests
 - ✅ Enable/disable extension toggle
 - ✅ Display list of currently blocked sites
