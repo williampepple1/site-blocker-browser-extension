@@ -89,6 +89,9 @@ function addSite() {
   input.value = '';
   logActivity('settings', `Added ${site} to blocked sites`);
   showMessage(`Added ${site} to blocked sites`, 'success');
+  
+  // Auto-save the settings
+  saveSettings();
 }
 
 function removeSite(index) {
@@ -97,6 +100,9 @@ function removeSite(index) {
   displaySites();
   logActivity('settings', `Removed ${removedSite} from blocked sites`);
   showMessage(`Removed ${removedSite} from blocked sites`, 'success');
+  
+  // Auto-save the settings
+  saveSettings();
 }
 
 function saveSettings() {

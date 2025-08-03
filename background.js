@@ -58,6 +58,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
           blockedSites.push(domain);
           chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
             alert(`${domain} has been added to blocked sites!`);
+            // Update blocking rules after adding site
+            updateBlockingRules();
           });
         }
       });
@@ -134,6 +136,14 @@ updateBlockingRules();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'settingsUpdated') {
     console.log('Settings updated, updating blocking rules');
+    updateBlockingRules();
+  }
+});
+
+// Listen for storage changes to update rules automatically
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync' && (changes.blockedSites || changes.enabled || changes.timeRestrictions)) {
+    console.log('Storage changed, updating blocking rules');
     updateBlockingRules();
   }
 });
