@@ -39,7 +39,7 @@ function checkAuthentication() {
 }
 
 function loadBlockedSites() {
-  chrome.storage.sync.get(['blockedSites', 'timeRestrictions'], (result) => {
+  chrome.storage.local.get(['blockedSites', 'timeRestrictions'], (result) => {
     blockedSites = result.blockedSites || [];
     displaySites();
     loadTimeRestrictions(result.timeRestrictions);
@@ -84,7 +84,12 @@ function addSite() {
     return;
   }
   
+  console.log('Adding site:', site);
+  console.log('Current blockedSites before:', blockedSites);
+  
   blockedSites.push(site);
+  console.log('Current blockedSites after:', blockedSites);
+  
   displaySites();
   input.value = '';
   logActivity('settings', `Added ${site} to blocked sites`);
@@ -108,10 +113,13 @@ function removeSite(index) {
 function saveSettings() {
   const timeRestrictions = getTimeRestrictions();
   
-  chrome.storage.sync.set({ 
+  console.log('Saving settings with blockedSites:', blockedSites);
+  
+  chrome.storage.local.set({ 
     blockedSites: blockedSites,
     timeRestrictions: timeRestrictions
   }, () => {
+    console.log('Settings saved successfully');
     // Log settings change
     logActivity('settings', `Settings updated - ${blockedSites.length} blocked sites, time restrictions ${timeRestrictions.enabled ? 'enabled' : 'disabled'}`);
     showMessage('Settings saved successfully!', 'success');

@@ -6,9 +6,9 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed');
   
   // Set default blocked sites if none exist
-  chrome.storage.sync.get(['blockedSites'], (result) => {
+  chrome.storage.local.get(['blockedSites'], (result) => {
     if (!result.blockedSites) {
-      chrome.storage.sync.set({
+      chrome.storage.local.set({
         blockedSites: [
           'facebook.com',
           'twitter.com',
@@ -36,40 +36,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'blockSite') {
-    // Check if password is set
-    chrome.storage.sync.get(['passwordSet'], (result) => {
-      if (!result.passwordSet) {
-        alert('Please set up a password first to use this feature!');
-        return;
-      }
-      
-      const url = new URL(tab.url);
-      const hostname = url.hostname.toLowerCase();
-      
-      // Remove www. prefix if present
-      const domain = hostname.replace(/^www\./, '');
-      
-      chrome.storage.sync.get(['blockedSites'], (result) => {
-        const blockedSites = result.blockedSites || [];
-        
-        if (blockedSites.includes(domain)) {
-          alert(`${domain} is already blocked!`);
-        } else {
-          blockedSites.push(domain);
-          chrome.storage.sync.set({ blockedSites: blockedSites }, () => {
-            alert(`${domain} has been added to blocked sites!`);
-            // Update blocking rules after adding site
-            updateBlockingRules();
-          });
-        }
-      });
-    });
+         // Check if password is set
+     chrome.storage.sync.get(['passwordSet'], (result) => {
+       if (!result.passwordSet) {
+         alert('Please set up a password first to use this feature!');
+         return;
+       }
+       
+       const url = new URL(tab.url);
+       const hostname = url.hostname.toLowerCase();
+       
+       // Remove www. prefix if present
+       const domain = hostname.replace(/^www\./, '');
+       
+       chrome.storage.local.get(['blockedSites'], (result) => {
+         const blockedSites = result.blockedSites || [];
+         
+         if (blockedSites.includes(domain)) {
+           alert(`${domain} is already blocked!`);
+         } else {
+           blockedSites.push(domain);
+           chrome.storage.local.set({ blockedSites: blockedSites }, () => {
+             alert(`${domain} has been added to blocked sites!`);
+             // Update blocking rules after adding site
+             updateBlockingRules();
+           });
+         }
+       });
+     });
   }
 });
 
 // Function to update blocking rules based on settings
 function updateBlockingRules() {
-  chrome.storage.sync.get(['enabled', 'blockedSites', 'timeRestrictions'], (result) => {
+  chrome.storage.local.get(['enabled', 'blockedSites', 'timeRestrictions'], (result) => {
+    console.log('Updating blocking rules with data:', result);
     const isEnabled = result.enabled !== false; // Default to true
     const blockedSites = result.blockedSites || [];
     const timeRestrictions = result.timeRestrictions || {};
@@ -142,7 +143,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Listen for storage changes to update rules automatically
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'sync' && (changes.blockedSites || changes.enabled || changes.timeRestrictions)) {
+  if (namespace === 'local' && (changes.blockedSites || changes.enabled || changes.timeRestrictions)) {
     console.log('Storage changed, updating blocking rules');
     updateBlockingRules();
   }

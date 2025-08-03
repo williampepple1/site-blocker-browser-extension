@@ -14,14 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadExtensionStatus() {
   // Check if extension is enabled
-  chrome.storage.sync.get(['enabled'], (result) => {
+  chrome.storage.local.get(['enabled'], (result) => {
     const isEnabled = result.enabled !== false; // Default to true
     updateStatus(isEnabled);
   });
 }
 
 function loadBlockedSites() {
-  chrome.storage.sync.get(['blockedSites', 'timeRestrictions'], (result) => {
+  chrome.storage.local.get(['blockedSites', 'timeRestrictions'], (result) => {
     const blockedSites = result.blockedSites || [];
     const timeRestrictions = result.timeRestrictions || {};
     const siteListElement = document.getElementById('siteList');
@@ -56,11 +56,11 @@ function updateStatus(enabled) {
 }
 
 function toggleExtension() {
-  chrome.storage.sync.get(['enabled'], (result) => {
+  chrome.storage.local.get(['enabled'], (result) => {
     const currentStatus = result.enabled !== false; // Default to true
     const newStatus = !currentStatus;
     
-    chrome.storage.sync.set({ enabled: newStatus }, () => {
+    chrome.storage.local.set({ enabled: newStatus }, () => {
       updateStatus(newStatus);
       console.log(`Extension ${newStatus ? 'enabled' : 'disabled'}`);
     });
